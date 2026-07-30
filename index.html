@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Barritas — Panel comercial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --bg:#F8FAF8; --surface:#FFFFFF; --ink:#515456; --ink-soft:#828485; --ink-faint:#ABADAE;
+  --sage:#8BAA84; --sage-deep:#5A6E56; --sage-pale:#EFF3EE; --sage-line:#CBD9C8;
+  --amber:#C97B3D; --terracotta:#B5654A; --line:#DDE3DC;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Fira Sans Condensed',sans-serif;}
+.app-shell{display:flex;min-height:100vh;}
+.sidebar{width:216px;flex-shrink:0;background:#F3EFE6;border-right:1px solid var(--line);padding:22px 14px;display:flex;flex-direction:column;gap:4px;}
+.brand{padding:2px 8px 0;margin-bottom:24px;}
+.brand-logo{width:150px;max-width:100%;}
+.brand-logo svg{width:100%;height:auto;display:block;}
+.brand-sub{font-size:10.5px;color:var(--ink-faint);letter-spacing:.3px;text-transform:uppercase;margin-top:6px;font-weight:600;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;border:none;background:transparent;color:var(--ink-soft);font-weight:500;font-size:14px;cursor:pointer;text-align:left;width:100%;font-family:inherit;}
+.nav-item.active{background:var(--sage-pale);color:var(--sage-deep);font-weight:600;}
+.nav-item:hover:not(.active){background:#EDE9DD;}
+.sidebar-footer{margin-top:auto;padding:10px 8px;font-size:11px;color:var(--ink-faint);line-height:1.5;}
+.main{flex:1;min-width:0;padding:26px 30px;overflow:auto;}
+.section-title{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap;}
+.page-title{font-family:'Fira Sans Condensed',sans-serif;font-weight:600;font-size:24px;margin:0;}
+.page-sub{margin:4px 0 0;font-size:13.5px;color:var(--ink-soft);}
+.btn-primary{display:inline-flex;align-items:center;gap:6px;background:var(--sage);color:#fff;border:none;border-radius:9px;padding:9px 14px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;}
+.btn-secondary{border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;color:var(--ink-soft);font-family:inherit;}
+.btn-icon{border:none;background:transparent;cursor:pointer;color:var(--ink-faint);display:inline-flex;padding:2px;font-size:14px;}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:22px;}
+.kpi-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:6px;min-width:0;}
+.kpi-label{font-size:12px;color:var(--ink-soft);font-weight:600;letter-spacing:.2px;text-transform:uppercase;}
+.kpi-value{font-family:'Fira Sans Condensed',sans-serif;font-size:26px;font-weight:600;line-height:1.1;}
+.kpi-sub{font-size:12px;color:var(--ink-faint);}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;}
+.card-title{margin:0 0 12px;font-weight:600;font-size:13.5px;}
+.empty-state{background:var(--surface);border:1px dashed var(--sage-line);border-radius:14px;padding:28px 24px;text-align:center;color:var(--ink-soft);margin-bottom:22px;}
+.empty-state strong{display:block;margin-bottom:4px;color:var(--ink);font-weight:600;}
+table{width:100%;border-collapse:collapse;font-size:12.8px;}
+thead tr{background:#F3EFE6;text-align:left;}
+th{padding:10px 12px;font-weight:600;color:var(--ink-soft);white-space:nowrap;}
+td{padding:8px 12px;border-top:1px solid var(--line);}
+.table-wrap{overflow-x:auto;}
+.table-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+input,select{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13.5px;font-family:'Inter',sans-serif;color:var(--ink);background:#fff;outline:none;width:100%;}
+input:focus,select:focus{border-color:var(--sage);}
+.field{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--ink-soft);font-weight:500;}
+.cell-input{padding:5px 7px;}
+.gauge{width:100%;height:8px;border-radius:8px;background:var(--sage-pale);overflow:hidden;}
+.gauge-fill{height:100%;border-radius:8px;}
+.modal{position:relative;margin-bottom:20px;background:var(--surface);border:1px solid var(--sage-line);border-radius:14px;padding:20px;}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.modal-title{margin:0;font-weight:600;font-size:15px;font-family:'Fira Sans Condensed',sans-serif;}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-row{display:grid;grid-template-columns:1.6fr .7fr .9fr 1fr 1fr auto;gap:10px;align-items:end;}
+.form-row-compras{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr auto;gap:10px;align-items:end;}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:11.5px;color:var(--ink-soft);margin-top:10px;}
+.legend-dot{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:middle;}
+@media (max-width:760px){
+  .app-shell{flex-direction:column;}
+  .sidebar{width:100%;flex-direction:row;flex-wrap:wrap;padding:12px;}
+  .sidebar-footer{display:none;}
+  .form-row,.form-row-compras,.form-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+
+var productos = [];
+var ventas = [];
+var compras = [];
+var currentTab = 'dashboard';
+var showAddProduct = false;
+var saveError = false;
+var chartBar = null;
+var chartPie = null;
+
+var RAW_PRODUCTS = [
+  ["Conciencia V", "Laddubar Brownie", 12, 16598.97, 1800],
+  ["Conciencia V", "Laddubar Proteicas", 10, 23383.1, 2800],
+  ["Conciencia V", "Integra Proteicas-arándanos", 10, 17391, 2200],
+  ["Conciencia V", "Integra avena, almendras, nuez", 10, 11826.06, 1600],
+  ["Conciencia V", "Integra avena, cacao, choco", 10, 11826.06, 1600],
+  ["Conciencia V", "2 Good Proteicas yogur", 10, 20933, 2500],
+  ["Conciencia V", "Muecas Sport club proteicas", 12, 25752.26, 2600],
+  ["Conciencia V", "Muecas Manzana y arándanos", 16, 20576.39, 1700],
+  ["Conciencia V", "Muecas Cacao y avellanas", 16, 20576.39, 1700],
+  ["Conciencia V", "Brava Proteica dátiles y choco", 12, 17722.14, 2000],
+  ["Conciencia V", "Brava Castañas, dátiles y chocolate", 6, 7233.61, 1600],
+  ["Conciencia V", "Brava Dátiles, arándanos y almendras", 12, 14467.2, 1600],
+  ["Conciencia V", "Brava Fungi", 6, 9946.2, 2100],
+  ["Conciencia V", "Not protein bar Berry pie", 12, 20469.95, 2200],
+  ["Grano Max", "Protein chocolate y maní", 12, 12500, 1600],
+  ["Grano Max", "Barra de coco", 12, 12500, 1600],
+  ["Good Life Dietética", "Entre Nuts Frutilla Deli", 10, 12662.2, 1700],
+  ["Good Life Dietética", "Ki Bar proteica frutos rojos", 5, 6140, 1700],
+  ["Good Life Dietética", "Growsbar proteica sabor coco crunch", 12, 16290.8, 1800],
+  ["Good Life Dietética", "ByZen semillas, dátiles, cacao y coco", 12, 17386.7, 1800],
+  ["Good Life Dietética", "Johnnys frutos secos y arándanos", 12, 10312.4, 1500]
+];
+
+var BRAND_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="493.8 326.0 932.4 426.9">
+<defs><clipPath id="clip_1"><path transform="matrix(1,0,0,-1,0,1080)" d="M0 1080H1920V0H0Z"/></clipPath></defs>
+<g>
+<path transform="matrix(1,0,0,-1,513.7502,596.9256)" d="M0 0H6.02L32.764-44.506 59.705 0H65.725L70.66-73.026H62.764L59.113-15.591 32.863-58.42 6.612-15.889 2.961-73.026H-4.935Z" fill="#515456"/>
+<g clip-path="url(#clip_1)">
+<path transform="matrix(1,0,0,-1,660.0881,639.3598)" d="M0 0C-.887 10.56-7.104 17.565-17.96 17.565-28.914 17.565-35.328 10.56-36.118 0ZM-44.506-3.551C-44.506 13.027-34.737 24.772-17.96 24.772-1.381 24.772 8.093 13.127 8.093-3.551 8.093-4.736 7.994-5.821 7.896-6.711H-36.316C-35.526-17.863-28.617-24.571-16.282-24.571-10.065-24.571-3.551-23.091 2.37-19.242L5.626-25.756C-.591-29.705-8.289-31.777-16.578-31.777-35.032-31.777-44.506-20.23-44.506-3.551" fill="#515456"/>
+<path transform="matrix(1,0,0,-1,700.2467,656.5303)" d="M0 0V58.52L7.598 60.789V.79C7.598-4.836 9.276-7.203 13.42-7.203 15.592-7.203 17.467-6.614 19.144-4.934V-12.237C17.96-13.422 15.395-14.607 11.842-14.607 5.822-14.607 0-11.645 0 0" fill="#515456"/>
+<path transform="matrix(1,0,0,-1,0,1080)" d="M747.61 464.227H755.208V410.04798H747.61ZM746.524 483.469H756.097V473.304H746.524Z" fill="#515456"/>
+<path transform="matrix(1,0,0,-1,786.5851,665.21597)" d="M0 0 3.75 6.416C8.684 2.862 14.802 1.483 20.921 1.483 29.802 1.483 34.145 4.934 34.145 9.968 34.145 15.989 27.039 17.863 20.625 19.343 10.558 21.712 1.282 25.066 1.282 35.726 1.282 44.804 8.585 50.628 21.118 50.628 26.644 50.628 33.454 49.64 39.177 46.086L36.02 39.77C31.777 42.24 25.659 43.127 21.118 43.127 13.52 43.127 9.276 40.265 9.276 35.824 9.276 30.003 15.395 28.52 22.303 26.843 33.355 24.079 42.138 21.02 42.138 9.968 42.138 .495 34.639-5.921 20.921-5.921 13.52-5.921 5.724-4.441 0 0" fill="#515456"/>
+<path transform="matrix(1,0,0,-1,903.1238,642.8139)" d="M0 0V12.732C-4.343 17.96-10.362 20.922-18.651 20.922-30.197 20.922-37.5 13.027-37.5-.197-37.5-13.422-30.493-20.919-18.948-20.919-6.118-20.919 0-12.237 0 0M19.244-18.65V-25.953C18.059-27.138 15.494-28.323 11.842-28.323 6.217-28.323 .79-25.756 .099-16.973-3.257-22.697-9.671-28.323-19.639-28.323-35.33-28.323-45.592-18.158-45.592-.197-45.592 17.565-34.935 28.226-18.849 28.226-11.052 28.226-4.539 25.461 .395 20.822L1.284 27.041H7.698V-12.926C7.698-18.553 9.276-20.919 13.422-20.919 15.592-20.919 17.468-20.33 19.244-18.65" fill="#515456"/>
+<path transform="matrix(1,0,0,-1,982.9395,662.4513)" d="M0 0H29.506C37.402 0 42.73 4.836 42.73 13.124 42.73 21.314 37.402 26.151 29.506 26.151H0ZM0 33.357H26.941C34.441 33.357 39.474 37.698 39.474 45.791 39.474 53.684 34.441 58.028 26.941 58.028H0ZM-7.896-7.501V65.526H27.928C39.572 65.526 47.764 57.633 47.764 46.086 47.764 39.375 45.098 34.538 39.474 30.689 46.579 27.533 51.12 21.117 51.12 12.729 51.12 .097 42.039-7.501 29.506-7.501Z" fill="#515456"/>
+<path transform="matrix(1,0,0,-1,1084.179,607.97769)" d="M0 0 11.546 16.973H22.007L7.007 0ZM25.56-34.933C25.56-22.302 19.145-14.111 6.217-14.111-6.81-14.111-13.125-22.302-13.125-34.933-13.125-47.468-6.81-55.756 6.217-55.756 19.145-55.756 25.56-47.468 25.56-34.933M-21.217-34.933C-21.217-17.96-11.743-6.611 6.217-6.611 24.178-6.611 33.651-17.96 33.651-34.933 33.651-51.809 24.178-63.159 6.217-63.159-11.743-63.159-21.217-51.809-21.217-34.933" fill="#515456"/>
+<path transform="matrix(1,0,0,-1,1149.8943,615.7731)" d="M0 0H6.709L7.302-10.757C11.151-1.777 17.664 1.185 25.558 1.185 27.138 1.185 29.111 .887 30.296 .592V-7.501C28.422-7.005 26.151-6.808 24.671-6.808 13.815-6.808 7.598-15.001 7.598-27.238V-54.179H0Z" fill="#515456"/>
+<path transform="matrix(1,0,0,-1,1215.2146,651.6938)" d="M0 0V28.618H-8.783V33.651L0 35.921 1.777 48.255H7.698V35.921H27.238V28.618H7.698V0C7.698-8.093 10.56-12.14 18.653-12.14 21.712-12.14 23.885-11.845 26.251-10.858V-17.766C24.474-18.75 20.922-19.443 17.766-19.443 5.921-19.443 0-12.632 0 0" fill="#515456"/>
+<path transform="matrix(1,0,0,-1,1315.1769,642.91116)" d="M0 0C0 12.632-6.416 20.822-19.343 20.822-32.37 20.822-38.685 12.632-38.685 0-38.685-12.535-32.37-20.822-19.343-20.822-6.416-20.822 0-12.535 0 0M-46.779 0C-46.779 16.973-37.303 28.323-19.343 28.323-1.382 28.323 8.093 16.973 8.093 0 8.093-16.876-1.382-28.226-19.343-28.226-37.303-28.226-46.779-16.876-46.779 0" fill="#515456"/>
+<path transform="matrix(1,0,0,-1,1355.3323,656.5303)" d="M0 0V58.52L7.601 60.789V.79C7.601-4.836 9.278-7.203 13.422-7.203 15.594-7.203 17.468-6.614 19.145-4.934V-12.237C17.96-13.422 15.396-14.607 11.842-14.607 5.824-14.607 0-11.645 0 0" fill="#515456"/>
+<path transform="matrix(1,0,0,-1,0,1080)" d="M1402.697 464.227H1410.298V410.04798H1402.697ZM1401.612 483.469H1411.185V473.304H1401.612Z" fill="#515456"/>
+<path transform="matrix(1,0,0,-1,733.7971,706.904)" d="M0 0H2.431L22.366-13.676V0H25.662V-30.479H22.366V-17.547L3.296-4.448V-30.479H0Z" fill="#515456"/>
+<path transform="matrix(1,0,0,-1,777.1292,724.12149)" d="M0 0V17.217H3.294V0C3.294-6.589 6.796-10.585 12.809-10.585 18.782-10.585 22.283-6.589 22.283 0V17.217H25.577V0C25.577-8.566 20.841-13.757 12.809-13.757 4.736-13.757 0-8.566 0 0" fill="#515456"/>
+<path transform="matrix(1,0,0,-1,827.8133,710.0761)" d="M0 0H-10.132V3.172H13.428V0H3.296V-27.307H0Z" fill="#515456"/>
+<path transform="matrix(1,0,0,-1,859.6342,710.0353)" d="M0 0V-14.578H9.679C13.839-14.578 17.011-12.027 17.011-7.247 17.011-2.551 13.757 0 9.803 0ZM14.663-19.562C16.434-22.487 17.711-24.135 20.676-24.712V-27.677C16.599-27.389 14.458-25.207 12.027-21.252L9.761-17.587H0V-27.348H-3.296V3.131H9.803C15.61 3.131 20.471-.451 20.471-7.247 20.471-12.519 16.805-15.898 13.057-16.885Z" fill="#515456"/>
+<path transform="matrix(1,0,0,-1,0,1080)" d="M896.572 373.096H899.86807V342.617H896.572Z" fill="#515456"/>
+<path transform="matrix(1,0,0,-1,916.0433,722.1437)" d="M0 0C0 9.35 5.561 15.735 15.487 15.735 19.606 15.735 23.065 14.541 25.825 12.563L24.178 9.679C21.582 11.491 18.658 12.563 15.487 12.563 7.701 12.563 3.501 7.372 3.501 0 3.501-7.372 7.701-12.563 15.528-12.563 19.194-12.563 22.407-11.08 24.96-8.566L26.978-11.243C23.848-14.208 20.14-15.735 15.487-15.735 5.766-15.735 0-9.309 0 0" fill="#515456"/>
+<path transform="matrix(1,0,0,-1,0,1080)" d="M958.407 373.096H961.703V342.617H958.407Z" fill="#515456"/>
+<path transform="matrix(1,0,0,-1,1004.897,722.1437)" d="M0 0C0 7.413-4.242 12.563-11.779 12.563-19.318 12.563-23.518 7.413-23.518 0-23.518-7.413-19.318-12.563-11.779-12.563-4.242-12.563 0-7.413 0 0M-27.019 0C-27.019 9.309-21.377 15.735-11.779 15.735-2.141 15.735 3.501 9.309 3.501 0 3.501-9.269-2.141-15.735-11.779-15.735-21.377-15.735-27.019-9.269-27.019 0" fill="#515456"/>
+<path transform="matrix(1,0,0,-1,1024.5986,706.904)" d="M0 0H2.431L22.366-13.676V0H25.662V-30.479H22.366V-17.547L3.296-4.448V-30.479H0Z" fill="#515456"/>
+<path transform="matrix(1,0,0,-1,0,1080)" d="M1068.174 373.096H1071.47V342.617H1068.174Z" fill="#515456"/>
+<path transform="matrix(1,0,0,-1,1087.5901,734.6658)" d="M0 0 1.647 2.884C4.119 .743 7.62-.041 10.956-.041 16.229-.041 18.824 2.225 18.824 5.561 18.824 9.143 14.539 10.297 10.709 11.287 5.437 12.644 .165 14.13 .165 20.101 .165 25.085 4.161 28.257 10.956 28.257 14.005 28.257 17.711 27.64 20.595 25.869L19.029 23.066C16.722 24.549 13.509 25.085 10.956 25.085 6.344 25.085 3.625 23.148 3.625 20.101 3.625 16.6 7.374 15.613 11.45 14.581 16.641 13.265 22.283 11.739 22.283 5.561 22.283 .329 18.329-3.213 10.956-3.213 7.002-3.213 3.089-2.307 0 0" fill="#515456"/>
+<path transform="matrix(1,0,0,-1,1133.3546,710.0761)" d="M0 0H-10.132V3.172H13.428V0H3.296V-27.307H0Z" fill="#515456"/>
+<path transform="matrix(1,0,0,-1,1182.9071,725.2343)" d="M0 0V4.655C0 11.494-3.542 15.653-9.638 15.653-15.776 15.653-19.318 11.494-19.318 4.655V0ZM-22.612 4.655C-22.612 13.469-17.835 18.825-9.638 18.825-1.483 18.825 3.296 13.469 3.296 4.655V-12.149H0V-3.21H-19.318V-12.149H-22.612Z" fill="#515456"/>
+<path transform="matrix(1,0,0,-1,1073.7254,504.10939)" d="M0 0C-8.702-27.95-30.5-38.9-44.254-33.875-48.978-32.149-51.769-27.222-51.657-22.478-51.429-12.802-40.072-2.765-29.885 .468-19.766 3.679-14.327 5.164-4.003 5.008-2.201 4.981-.411 4.877 1.38 4.784 .952 3.181 .493 1.584 0 0M-43.786 6.915C-40.936 14.49-37.87 22.22-32.694 28.651-29.365 32.788-25.346 36.418-20.865 39.251-16.301 42.136-10.552 44.858-5.243 44.358-.963 43.956 1.784 40.952 2.991 37.05 5.238 29.79 2.821 11.791 2.821 11.791-6.292 12.199-10.58 11.93-19.763 10.656-34.354 8.633-45.953 .14-46.411-.394-45.589 2.001-44.719 4.434-43.786 6.915M2.967 96.772C10.053 107.166 17.47 117.395 25.452 127.232 29.815 132.608 34.08 138.069 38.928 143.084 43.378 147.688 49.164 153.923 55.601 155.488 56.97 155.82 58.356 154.913 58.837 153.466 59.666 150.973 53.499 144.401 52.156 142.624 46.727 135.441 40.958 128.496 35.152 121.603 28.84 114.108 22.424 106.695 15.92 99.361 9.287 91.882-10.447 73.912-12.618 72.045-11.296 75.039-.996 90.959 2.967 96.772M80.556 26.434C83.706 16.972 79.074-2.036 34.929 7.34 26.641 9.1 18.261 10.182 11.78 10.836 11.802 10.989 11.838 11.141 11.86 11.295 12.941 19.026 12.982 26.826 11.755 34.359 10.553 41.735 6.911 48.702-1.034 50.145-1.551 50.239-2.075 50.306-2.603 50.349-13.372 51.225-24.131 41.422-31.535 34.326-26.876 43.772-23.44 52.883-17.963 62.512 28.443 102.611 56.822 137.883 61.925 146.759 63.323 149.191 64.998 151.702 64.942 154.484 64.824 160.277 59.936 163.151 54.113 161.548 41.665 158.121 31.12 148.194 22.263 138.982 1.935 117.838-15.897 93.002-29.331 67.231-37.698 51.182-45.582 34.773-52.346 18.084-57.18 6.157-61.496-5.993-64.45-18.338-65.703-23.573-67.109-32.548-67.605-37.841-67.741-39.293-67.944-42.296-66.952-43.141-63.354-46.203-57.575-43.841-55.49-39.643-44.687-48.302-22.944-43.584-4.877-24.805 3.147-16.464 8.243-6.133 10.624 4.554 16.971 4.073 23.657 3.496 24.624 3.355 38.129 1.384 51.91-.083 65.794 2.866 77.679 5.39 85.893 11.993 87.777 24.04 88.945 31.51 77.405 35.896 80.556 26.434" fill="#8baa84"/>
+<path transform="matrix(1,0,0,-1,1027.225,473.56764)" d="M0 0C-8-15.662-16.754-31.228-27.655-45.14-30.581-48.874-33.592-52.544-36.776-56.061-39.934-59.55-43.263-62.893-46.845-65.948-50.528-69.089-54.586-71.73-58.536-74.51-58.92-74.78-59.332-75.029-59.817-75.031-60.717-75.035-61.002-74.048-61.095-73.323-61.683-68.76-60.394-64.013-59.219-59.646-57.861-54.595-56.038-49.685-54.1-44.831-49.593-33.549-43.91-22.669-38.588-11.68-33.181-.519-27.482 13.346-31.625 24.037-34.737 32.066-42.901 34.875-51.41 32.364-54.254 31.525-57.055 30.166-59.708 28.47-75.009 18.736-87.756-1.06-98.349-15.629-102.032-20.687-107.784-30.368-111.2-35.521-109.496-28.91-106.205-17.691-104.777-11.071-103.975-7.351-103.125-3.633-102.226 .081-100.717 6.316-97.185 15.41-102.602 18.961-105.111 20.605-108.491 20.721-111.502 18.482-114.51 16.245-116.927 13.261-119.3 10.267-131.293-4.862-159.55-43.608-162.11-47.427-161.55-45.512-160.891-43.624-160.136-41.775-157.152-34.461-144.732-9.437-143.246-3.508-141.854 2.042-140.573 8.166-142.541 13.4-144.163 17.713-147.761 18.348-152.068 18.158-158.526 17.872-165.957 12.542-171.754 8.498-178.629 3.702-185.206-1.705-191.756-7.106-200.162-14.037-208.597-21.427-217.746-26.869-229.598-34.42-243.385-42.826-255.526-39.341-260.706-37.906-264.894-33.464-262.006-26.869-260.991-24.716-262.025-22.393-264.069-22.359-267.423-22.29-268.215-26.356-268.618-29.158-269.989-37.461-263.828-43.134-257.625-44.5-234.09-50.07-189.839-12.06-167.327 1.095-163.058 3.624-158.25 6.255-153.94 7.69-152.838 8.031-152.38 7.862-152.147 7.793-150.684 7.362-151.638 4.597-152.109 3.475-160.655-16.869-171.337-36.584-175.219-58.492-176.115-63.549-177.92-69.945-173.436-72.343-173.022-72.564-172.309-73.251-171.779-72.649-171.038-71.806-170.602-70.402-170.05-69.413-168.23-66.148-166.165-63.026-164.173-59.861-153.646-43.14-142.722-26.71-130.38-11.491-127.521-7.966-124.609-4.488-121.634-1.082-119.023 1.909-116.395 4.835-113.721 7.698-112.859 8.652-111.973 9.575-111.117 10.497-107.715 13.901-109.654 7.507-110.213 6.044-112.437 .254-114.838-5.567-116.976-11.356-119.73-18.872-122.648-26.35-125.299-33.89-127.164-39.195-131.915-48.262-127.787-52.133-126.023-53.787-123.502-54.289-121.072-54.747-119.07-55.123-117.49-54.017-115.95-52.172-112.08-47.535-109.256-41.742-105.976-36.656-95.499-20.412-83.894-3.945-70.457 9.764-67.279 13.007-63.962 16.102-60.492 18.932-56.743 22.001-52.38 25.481-47.993 26.579-41.677 28.158-40.81 21.327-42.772 15.72-43.84 12.669-45.537 9.785-47.072 6.908-50.9-.266-54.536-7.503-57.831-14.896-64.53-29.928-72.986-45.85-73.689-62.628-73.917-68.066-73.339-74.039-70.625-78.873-69.744-80.444-68.513-81.856-66.663-82.135-64.738-82.425-62.784-81.724-60.996-81.097-57.489-79.867-54.449-77.848-51.342-75.863-47.569-73.452-43.995-70.727-40.671-67.728-36.789-64.225-33.233-60.34-30.193-56.082-13.118-32.16-9.172-26.307 2.441-1.113 2.969 .031 .454 .89 0 0" fill="#8baa84"/>
+</g>
+</g>
+</svg>`;
+
+function uid(p){ return p + '_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,7); }
+function fmt(n){ n = Number.isFinite(n) ? n : 0; return new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0}).format(n); }
+function fmtNum(n){ n = Number.isFinite(n) ? n : 0; return new Intl.NumberFormat('es-AR',{maximumFractionDigits:0}).format(n); }
+function pct(n){ n = Number.isFinite(n) ? n : 0; return (n*100).toFixed(1) + '%'; }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, function(s){
+    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[s];
+  });
+}
+
+function seedProducts(){
+  return RAW_PRODUCTS.map(function(r){
+    var proveedor=r[0], marca=r[1], presentacion=r[2], costoCaja=r[3], precioVenta=r[4];
+    return {
+      id: uid('p'), proveedor: proveedor, marca: marca, presentacion: presentacion,
+      costoCaja: costoCaja, precioVenta: precioVenta, stock: 0,
+      stockMinimo: Math.max(6, Math.round(presentacion/2))
+    };
+  });
+}
+
+function withDerived(p){
+  var costoUnidad = p.presentacion > 0 ? p.costoCaja / p.presentacion : 0;
+  var gananciaUnidad = p.precioVenta - costoUnidad;
+  var margenVenta = p.precioVenta > 0 ? gananciaUnidad / p.precioVenta : 0;
+  var valorStock = p.stock * costoUnidad;
+  var out = {};
+  for (var k in p) out[k] = p[k];
+  out.costoUnidad = costoUnidad;
+  out.gananciaUnidad = gananciaUnidad;
+  out.margenVenta = margenVenta;
+  out.valorStock = valorStock;
+  return out;
+}
+
+function load(){
+  try{
+    var raw = localStorage.getItem('erp-barritas-data');
+    if(raw){
+      var data = JSON.parse(raw);
+      productos = (data.productos && data.productos.length) ? data.productos : seedProducts();
+      ventas = data.ventas || [];
+      compras = data.compras || [];
+    } else {
+      productos = seedProducts();
+    }
+  } catch(e){
+    productos = seedProducts();
+  }
+}
+
+function save(){
+  try{
+    localStorage.setItem('erp-barritas-data', JSON.stringify({productos:productos, ventas:ventas, compras:compras}));
+    saveError = false;
+  } catch(e){
+    saveError = true;
+  }
+}
+
+function kpiCard(label, value, sub, accent){
+  return '<div class="kpi-card"><span class="kpi-label">' + label + '</span>' +
+    '<span class="kpi-value" style="color:' + (accent || 'var(--ink)') + '">' + value + '</span>' +
+    (sub ? '<span class="kpi-sub">' + sub + '</span>' : '') + '</div>';
+}
+
+function render(){
+  var app = document.getElementById('app');
+  app.innerHTML =
+    '<div class="app-shell">' +
+      '<aside class="sidebar">' +
+        '<div class="brand"><div class="brand-logo">' + BRAND_LOGO_SVG + '</div><div class="brand-sub">Barritas nutricionales</div></div>' +
+        renderNav() +
+        '<div class="sidebar-footer">' + (saveError ? 'No se pudieron guardar los últimos cambios (revisá el espacio de almacenamiento del navegador).' : 'Los datos se guardan automáticamente en este navegador.') + '</div>' +
+      '</aside>' +
+      '<main class="main" id="main-content"></main>' +
+    '</div>';
+
+  var navBtns = document.querySelectorAll('.nav-item');
+  for (var i=0;i<navBtns.length;i++){
+    navBtns[i].addEventListener('click', function(e){
+      currentTab = e.currentTarget.getAttribute('data-tab');
+      showAddProduct = false;
+      render();
+    });
+  }
+  renderTab();
+}
+
+function renderNav(){
+  var tabs = [['dashboard','Dashboard'],['catalogo','Catálogo y stock'],['ventas','Ventas'],['compras','Compras']];
+  return tabs.map(function(t){
+    return '<button class="nav-item ' + (currentTab===t[0]?'active':'') + '" data-tab="' + t[0] + '">' + t[1] + '</button>';
+  }).join('');
+}
+
+function renderTab(){
+  var main = document.getElementById('main-content');
+  if(currentTab==='dashboard'){ main.innerHTML = dashboardHTML(); attachDashboardCharts(); }
+  else if(currentTab==='catalogo'){ main.innerHTML = catalogoHTML(); attachCatalogoHandlers(); }
+  else if(currentTab==='ventas'){ main.innerHTML = ventasHTML(); attachVentasHandlers(); }
+  else if(currentTab==='compras'){ main.innerHTML = comprasHTML(); attachComprasHandlers(); }
+}
+
+function dashboardHTML(){
+  var prod = productos.map(withDerived);
+  var totalUnidadesVendidas = ventas.reduce(function(s,v){return s+v.cantidad;},0);
+  var ingresos = ventas.reduce(function(s,v){return s+v.total;},0);
+  var gananciaTotal = ventas.reduce(function(s,v){return s+v.gananciaTotal;},0);
+  var margenPromedio = ingresos>0 ? gananciaTotal/ingresos : 0;
+  var valorStock = prod.reduce(function(s,p){return s+p.valorStock;},0);
+  var unidadesStock = prod.reduce(function(s,p){return s+p.stock;},0);
+  var bajoStock = prod.filter(function(p){return p.stock<=p.stockMinimo;});
+
+  var chartsSection;
+  if(ventas.length===0){
+    chartsSection = '<div class="empty-state"><strong>Todavía no hay ventas cargadas</strong>' +
+      '<p style="margin:0;font-size:13.5px;">Cargá stock inicial en Catálogo y registrá tu primera venta para ver los indicadores acá.</p></div>';
+  } else {
+    chartsSection =
+      '<div class="form-grid" style="grid-template-columns:1.4fr 1fr;margin-bottom:22px;">' +
+        '<div class="card"><p class="card-title">Ganancia por marca</p>' +
+          '<div style="position:relative;height:220px;"><canvas id="chart-bar" role="img" aria-label="Ganancia por marca"></canvas></div></div>' +
+        '<div class="card"><p class="card-title">Ventas por canal</p>' +
+          '<div style="position:relative;height:190px;"><canvas id="chart-pie" role="img" aria-label="Ventas por canal"></canvas></div>' +
+          '<div class="legend" id="pie-legend"></div></div>' +
+      '</div>';
+  }
+
+  var alertsHTML;
+  if(bajoStock.length===0){
+    alertsHTML = '<p style="font-size:13px;color:var(--ink-soft);margin:0;">Ningún producto está por debajo de su mínimo.</p>';
+  } else {
+    alertsHTML = bajoStock.map(function(p){
+      var w = Math.min(100, p.stock/Math.max(p.stockMinimo*2,1)*100);
+      var color = p.stock===0 ? 'var(--terracotta)' : 'var(--amber)';
+      return '<div style="display:grid;grid-template-columns:1fr 100px 90px;gap:10px;align-items:center;">' +
+        '<span style="font-size:13px;">' + escapeHtml(p.marca) + ' <span style="color:var(--ink-faint);">· ' + escapeHtml(p.proveedor) + '</span></span>' +
+        '<div class="gauge"><div class="gauge-fill" style="width:' + w + '%;background:' + color + ';"></div></div>' +
+        '<span style="font-size:12.5px;text-align:right;color:var(--ink-soft);">' + p.stock + ' / mín. ' + p.stockMinimo + '</span>' +
+      '</div>';
+    }).join('');
+  }
+
+  return '<div class="section-title"><div><h1 class="page-title">Dashboard</h1><p class="page-sub">Resumen del negocio de barritas nutricionales</p></div></div>' +
+    '<div class="kpi-grid">' +
+      kpiCard('Ingresos totales', fmt(ingresos), fmtNum(totalUnidadesVendidas) + ' unidades vendidas') +
+      kpiCard('Ganancia total', fmt(gananciaTotal), 'Margen prom. ' + pct(margenPromedio), 'var(--sage-deep)') +
+      kpiCard('Valor de stock', fmt(valorStock), fmtNum(unidadesStock) + ' unidades en depósito') +
+      kpiCard('Stock bajo mínimo', fmtNum(bajoStock.length), bajoStock.length ? 'productos para reponer' : 'todo en orden', bajoStock.length ? 'var(--terracotta)' : 'var(--sage-deep)') +
+    '</div>' +
+    chartsSection +
+    '<div class="card"><p class="card-title">Alertas de stock</p><div style="display:flex;flex-direction:column;gap:10px;">' + alertsHTML + '</div></div>';
+}
+
+function attachDashboardCharts(){
+  if(ventas.length===0) return;
+  var map = {};
+  ventas.forEach(function(v){ map[v.marca] = (map[v.marca]||0) + v.gananciaTotal; });
+  var topPorGanancia = Object.keys(map).map(function(marca){ return {marca:marca, ganancia:Math.round(map[marca])}; })
+    .sort(function(a,b){ return b.ganancia-a.ganancia; }).slice(0,6);
+
+  var canalMap = {};
+  ventas.forEach(function(v){ var k=v.canal||'Sin canal'; canalMap[k]=(canalMap[k]||0)+v.total; });
+  var porCanal = Object.keys(canalMap).map(function(canal){ return {canal:canal, total:Math.round(canalMap[canal])}; });
+
+  var barEl = document.getElementById('chart-bar');
+  if(chartBar){ chartBar.destroy(); }
+  if(barEl){
+    chartBar = new Chart(barEl, {
+      type:'bar',
+      data:{ labels: topPorGanancia.map(function(d){return d.marca;}),
+        datasets:[{ label:'Ganancia', data: topPorGanancia.map(function(d){return d.ganancia;}), backgroundColor:'#7C9468', borderRadius:6, maxBarThickness:28 }] },
+      options:{ responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:function(ctx){ return fmt(ctx.parsed.y); } } } },
+        scales:{ x:{ ticks:{ font:{size:10.5}, autoSkip:false, maxRotation:35 }, grid:{display:false} },
+                 y:{ ticks:{ font:{size:11} }, grid:{ color:'#E4DFD3' } } } }
+    });
+  }
+
+  var pieColors = ['#7C9468','#C97B3D','#8B9DB8','#B5654A','#B8A15C','#9B8AA6'];
+  var pieEl = document.getElementById('chart-pie');
+  if(chartPie){ chartPie.destroy(); }
+  if(pieEl){
+    chartPie = new Chart(pieEl, {
+      type:'doughnut',
+      data:{ labels: porCanal.map(function(d){return d.canal;}),
+        datasets:[{ data: porCanal.map(function(d){return d.total;}),
+          backgroundColor: porCanal.map(function(_,i){ return pieColors[i%pieColors.length]; }), borderColor:'#FAF7F1', borderWidth:2 }] },
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false},
+        tooltip:{ callbacks:{ label:function(ctx){ return ctx.label + ': ' + fmt(ctx.parsed); } } } } }
+    });
+  }
+
+  var legendEl = document.getElementById('pie-legend');
+  if(legendEl){
+    var total = porCanal.reduce(function(s,d){return s+d.total;},0);
+    legendEl.innerHTML = porCanal.map(function(d,i){
+      var p = total>0 ? Math.round(d.total/total*100) : 0;
+      return '<span><span class="legend-dot" style="background:' + pieColors[i%pieColors.length] + '"></span>' + d.canal + ' ' + p + '%</span>';
+    }).join('');
+  }
+}
+
+function catalogoHTML(){
+  var prod = productos.map(withDerived);
+  var rows = prod.map(function(p){
+    var bajo = p.stock <= p.stockMinimo;
+    var w = Math.min(100, p.stock/Math.max(p.stockMinimo*2,1)*100);
+    return '<tr data-id="' + p.id + '">' +
+      '<td><input class="cell-input" style="width:140px;font-weight:500;" type="text" data-field="marca" value="' + escapeHtml(p.marca) + '"></td>' +
+      '<td><input class="cell-input" style="width:120px;color:var(--ink-soft);" type="text" data-field="proveedor" value="' + escapeHtml(p.proveedor) + '"></td>' +
+      '<td><input class="cell-input" style="width:54px" type="number" step="1" data-field="presentacion" value="' + p.presentacion + '"></td>' +
+      '<td><input class="cell-input" style="width:90px" type="number" step="0.01" data-field="costoCaja" value="' + p.costoCaja + '"></td>' +
+      '<td style="color:var(--ink-soft);">' + fmt(p.costoUnidad) + '</td>' +
+      '<td><input class="cell-input" style="width:78px" type="number" step="1" data-field="precioVenta" value="' + p.precioVenta + '"></td>' +
+      '<td style="color:var(--sage-deep);font-weight:600;">' + fmt(p.gananciaUnidad) + '</td>' +
+      '<td>' + pct(p.margenVenta) + '</td>' +
+      '<td><div style="display:flex;align-items:center;gap:8px;">' +
+        '<input class="cell-input" style="width:54px" type="number" step="1" data-field="stock" value="' + p.stock + '">' +
+        '<div class="gauge" style="width:44px;height:6px;"><div class="gauge-fill" style="width:' + w + '%;height:6px;background:' + (bajo?'var(--amber)':'var(--sage)') + ';"></div></div>' +
+      '</div></td>' +
+      '<td><button class="btn-icon" data-action="delete-product" title="Eliminar">✕</button></td>' +
+    '</tr>';
+  }).join('');
+
+  return '<div class="section-title"><div><h1 class="page-title">Catálogo y stock</h1>' +
+    '<p class="page-sub">Editá costo, precio y stock. Márgenes y ganancia se recalculan solos.</p></div>' +
+    '<button class="btn-primary" id="btn-add-product">+ Nuevo producto</button></div>' +
+    (showAddProduct ? addProductModalHTML() : '') +
+    '<div class="table-card"><div class="table-wrap"><table style="min-width:980px;">' +
+    '<thead><tr>' + ['Marca','Proveedor','Un./caja','Costo caja','Costo/un.','Precio venta','Ganancia/un.','Margen','Stock',''].map(function(h){return '<th>'+h+'</th>';}).join('') + '</tr></thead>' +
+    '<tbody>' + rows + '</tbody></table></div></div>';
+}
+
+function addProductModalHTML(){
+  return '<div class="modal"><div class="modal-head"><p class="modal-title">Nuevo producto</p><button class="btn-icon" id="modal-close">✕</button></div>' +
+    '<div class="form-grid">' +
+      '<label class="field">Marca / nombre<input id="np-marca" placeholder="Ej: Brava Fungi"></label>' +
+      '<label class="field">Proveedor<input id="np-proveedor" placeholder="Ej: Conciencia V"></label>' +
+      '<label class="field">Unidades por caja<input id="np-presentacion" type="number" value="12"></label>' +
+      '<label class="field">Costo total de la caja<input id="np-costo" type="number" placeholder="0.00"></label>' +
+      '<label class="field">Precio de venta (por barrita)<input id="np-venta" type="number" placeholder="0.00"></label>' +
+      '<label class="field">Stock inicial (unidades)<input id="np-stock" type="number" value="0"></label>' +
+      '<label class="field">Stock mínimo (alerta)<input id="np-min" type="number" value="6"></label>' +
+    '</div>' +
+    '<div class="modal-actions"><button class="btn-secondary" id="modal-cancel">Cancelar</button>' +
+    '<button class="btn-primary" id="modal-submit">Agregar producto</button></div></div>';
+}
+
+function attachCatalogoHandlers(){
+  var addBtn = document.getElementById('btn-add-product');
+  if(addBtn) addBtn.addEventListener('click', function(){ showAddProduct=true; render(); });
+
+  var rows = document.querySelectorAll('#main-content tbody tr');
+  rows.forEach(function(tr){
+    var id = tr.getAttribute('data-id');
+    var textFields = ['marca','proveedor'];
+    tr.querySelectorAll('input[data-field]').forEach(function(inp){
+      inp.addEventListener('blur', function(e){
+        var field = e.target.getAttribute('data-field');
+        var p = productos.find(function(x){return x.id===id;});
+        if(!p) return;
+        if(textFields.indexOf(field)!==-1){
+          var text = e.target.value.trim();
+          if(text){ p[field]=text; save(); render(); }
+          else { e.target.value = p[field]; }
+        } else {
+          var val = parseFloat(e.target.value);
+          if(!isNaN(val)){ p[field]=val; save(); render(); }
+        }
+      });
+    });
+    var delBtn = tr.querySelector('[data-action="delete-product"]');
+    if(delBtn) delBtn.addEventListener('click', function(){
+      var p = productos.find(function(x){return x.id===id;});
+      if(p && confirm('¿Eliminar ' + p.marca + ' del catálogo?')){
+        productos = productos.filter(function(x){return x.id!==id;});
+        save(); render();
+      }
+    });
+  });
+
+  if(showAddProduct){
+    var close = function(){ showAddProduct=false; render(); };
+    document.getElementById('modal-close').addEventListener('click', close);
+    document.getElementById('modal-cancel').addEventListener('click', close);
+    document.getElementById('modal-submit').addEventListener('click', function(){
+      var marca = document.getElementById('np-marca').value.trim();
+      var costo = parseFloat(document.getElementById('np-costo').value);
+      var venta = parseFloat(document.getElementById('np-venta').value);
+      if(!marca || isNaN(costo) || isNaN(venta)) return;
+      productos.push({
+        id: uid('p'), marca: marca,
+        proveedor: document.getElementById('np-proveedor').value.trim() || 'Sin proveedor',
+        presentacion: parseFloat(document.getElementById('np-presentacion').value) || 1,
+        costoCaja: costo, precioVenta: venta,
+        stock: parseFloat(document.getElementById('np-stock').value) || 0,
+        stockMinimo: parseFloat(document.getElementById('np-min').value) || 6
+      });
+      showAddProduct = false;
+      save(); render();
+    });
+  }
+}
+
+function ventasHTML(){
+  var prod = productos.map(withDerived);
+  var options = prod.map(function(p){
+    return '<option value="' + p.id + '" ' + (p.stock===0?'disabled':'') + '>' + escapeHtml(p.marca) + ' ' + (p.stock===0?'(sin stock)':('— stock ' + p.stock)) + '</option>';
+  }).join('');
+  var rows = ventas.map(function(v){
+    return '<tr><td>' + v.fecha + '</td><td style="font-weight:500;">' + escapeHtml(v.marca) + '</td><td>' + v.cantidad + '</td>' +
+      '<td style="color:var(--ink-soft);">' + v.canal + '</td><td style="color:var(--ink-soft);">' + (v.cliente ? escapeHtml(v.cliente) : '—') + '</td>' +
+      '<td>' + fmt(v.total) + '</td><td style="color:var(--sage-deep);font-weight:600;">' + fmt(v.gananciaTotal) + '</td>' +
+      '<td><button class="btn-icon" data-action="delete-venta" data-vid="' + v.id + '">✕</button></td></tr>';
+  }).join('');
+
+  return '<div class="section-title"><div><h1 class="page-title">Ventas</h1><p class="page-sub">Registrá cada venta: el stock se descuenta automáticamente.</p></div></div>' +
+    '<div class="card" style="margin-bottom:20px;"><div class="form-row">' +
+      '<label class="field">Producto<select id="v-producto"><option value="">Elegir producto…</option>' + options + '</select></label>' +
+      '<label class="field">Cantidad<input id="v-cantidad" type="number" min="1" value="1"></label>' +
+      '<label class="field">Fecha<input id="v-fecha" type="date" value="' + todayStr() + '"></label>' +
+      '<label class="field">Canal<select id="v-canal"><option>Presencial</option><option>WhatsApp</option><option>Instagram</option><option>Otro</option></select></label>' +
+      '<label class="field">Cliente (opcional)<input id="v-cliente" placeholder="Nombre"></label>' +
+      '<button class="btn-primary" id="v-submit">+ Registrar</button>' +
+    '</div><p id="v-info" style="margin:10px 0 0;font-size:12.5px;color:var(--ink-soft);"></p></div>' +
+    '<div class="table-card"><div class="table-wrap"><table style="min-width:760px;">' +
+    '<thead><tr>' + ['Fecha','Producto','Cant.','Canal','Cliente','Total','Ganancia',''].map(function(h){return '<th>'+h+'</th>';}).join('') + '</tr></thead>' +
+    '<tbody>' + (ventas.length===0 ? '<tr><td colspan="8" style="padding:18px;text-align:center;color:var(--ink-faint);">Sin ventas registradas todavía.</td></tr>' : rows) + '</tbody></table></div></div>';
+}
+
+function attachVentasHandlers(){
+  var sel = document.getElementById('v-producto');
+  var info = document.getElementById('v-info');
+  var updateInfo = function(){
+    var p = productos.map(withDerived).filter(function(x){return x.id===sel.value;})[0];
+    info.textContent = p ? ('Precio ' + fmt(p.precioVenta) + ' · Costo ' + fmt(p.costoUnidad) + ' · Ganancia por unidad ' + fmt(p.gananciaUnidad)) : '';
+  };
+  sel.addEventListener('change', updateInfo);
+  updateInfo();
+
+  document.getElementById('v-submit').addEventListener('click', function(){
+    var p = productos.map(withDerived).filter(function(x){return x.id===sel.value;})[0];
+    if(!p) return;
+    var cantidad = parseInt(document.getElementById('v-cantidad').value,10);
+    if(!cantidad || cantidad<1) return;
+    if(cantidad>p.stock){ alert('Stock insuficiente: quedan ' + p.stock + ' unidades de ' + p.marca + '.'); return; }
+    var total = p.precioVenta*cantidad;
+    var costoTotal = p.costoUnidad*cantidad;
+    ventas.unshift({
+      id: uid('v'), productoId: p.id, marca: p.marca, cantidad: cantidad,
+      precioUnitario: p.precioVenta, costoUnitario: p.costoUnidad,
+      total: total, costoTotal: costoTotal, gananciaTotal: total-costoTotal,
+      fecha: document.getElementById('v-fecha').value || todayStr(),
+      canal: document.getElementById('v-canal').value,
+      cliente: document.getElementById('v-cliente').value.trim()
+    });
+    var prodRef = productos.find(function(x){return x.id===p.id;});
+    prodRef.stock = Math.max(0, prodRef.stock - cantidad);
+    save(); render();
+  });
+
+  document.querySelectorAll('[data-action="delete-venta"]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var vid = btn.getAttribute('data-vid');
+      var v = ventas.find(function(x){return x.id===vid;});
+      if(!v) return;
+      var p = productos.find(function(x){return x.id===v.productoId;});
+      if(p) p.stock += v.cantidad;
+      ventas = ventas.filter(function(x){return x.id!==vid;});
+      save(); render();
+    });
+  });
+}
+
+function comprasHTML(){
+  var prod = productos.map(withDerived);
+  var options = prod.map(function(p){
+    return '<option value="' + p.id + '">' + escapeHtml(p.marca) + ' — ' + escapeHtml(p.proveedor) + '</option>';
+  }).join('');
+  var rows = compras.map(function(c){
+    return '<tr><td>' + c.fecha + '</td><td style="font-weight:500;">' + escapeHtml(c.marca) + '</td>' +
+      '<td>+' + c.cantidadUnidades + '</td><td style="color:var(--ink-soft);">' + (c.costoCaja?fmt(c.costoCaja):'—') + '</td>' +
+      '<td><button class="btn-icon" data-action="delete-compra" data-cid="' + c.id + '">✕</button></td></tr>';
+  }).join('');
+
+  return '<div class="section-title"><div><h1 class="page-title">Compras</h1><p class="page-sub">Registrá reposiciones de stock a tus proveedores.</p></div></div>' +
+    '<div class="card" style="margin-bottom:20px;"><div class="form-row-compras">' +
+      '<label class="field">Producto<select id="c-producto"><option value="">Elegir producto…</option>' + options + '</select></label>' +
+      '<label class="field">Unidades repuestas<input id="c-cantidad" type="number" min="1" placeholder="Ej: 12"></label>' +
+      '<label class="field">Nuevo costo de caja (opcional)<input id="c-costo" type="number" placeholder="Si cambió el precio"></label>' +
+      '<label class="field">Fecha<input id="c-fecha" type="date" value="' + todayStr() + '"></label>' +
+      '<button class="btn-primary" id="c-submit">+ Registrar</button>' +
+    '</div><label style="display:flex;align-items:center;gap:6px;margin-top:12px;font-size:12.5px;color:var(--ink-soft);">' +
+    '<input type="checkbox" id="c-actualizar" style="width:auto;"> Actualizar el costo de caja del producto con este valor</label></div>' +
+    '<div class="table-card"><div class="table-wrap"><table style="min-width:700px;">' +
+    '<thead><tr>' + ['Fecha','Producto','Unidades','Costo caja',''].map(function(h){return '<th>'+h+'</th>';}).join('') + '</tr></thead>' +
+    '<tbody>' + (compras.length===0 ? '<tr><td colspan="5" style="padding:18px;text-align:center;color:var(--ink-faint);">Sin compras registradas todavía.</td></tr>' : rows) + '</tbody></table></div></div>';
+}
+
+function attachComprasHandlers(){
+  document.getElementById('c-submit').addEventListener('click', function(){
+    var sel = document.getElementById('c-producto');
+    var p = productos.find(function(x){return x.id===sel.value;});
+    if(!p) return;
+    var cantidad = parseInt(document.getElementById('c-cantidad').value,10);
+    if(!cantidad || cantidad<1) return;
+    var costoInput = document.getElementById('c-costo').value;
+    var actualizar = document.getElementById('c-actualizar').checked;
+    var costoCaja = costoInput ? parseFloat(costoInput) : null;
+    compras.unshift({ id: uid('c'), productoId: p.id, marca: p.marca, cantidadUnidades: cantidad, costoCaja: costoCaja, fecha: document.getElementById('c-fecha').value || todayStr() });
+    p.stock += cantidad;
+    if(actualizar && costoCaja) p.costoCaja = costoCaja;
+    save(); render();
+  });
+
+  document.querySelectorAll('[data-action="delete-compra"]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var cid = btn.getAttribute('data-cid');
+      var c = compras.find(function(x){return x.id===cid;});
+      if(!c) return;
+      var p = productos.find(function(x){return x.id===c.productoId;});
+      if(p) p.stock = Math.max(0, p.stock - c.cantidadUnidades);
+      compras = compras.filter(function(x){return x.id!==cid;});
+      save(); render();
+    });
+  });
+}
+
+load();
+render();
+</script>
+</body>
+</html>
