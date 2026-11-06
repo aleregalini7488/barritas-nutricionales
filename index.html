@@ -60,7 +60,7 @@ input:focus,select:focus{border-color:var(--sage);}
 .modal-title{margin:0;font-weight:600;font-size:15px;font-family:'Fira Sans Condensed',sans-serif;}
 .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.form-row{display:grid;grid-template-columns:1.6fr .7fr .9fr 1fr 1fr auto;gap:10px;align-items:end;}
+.form-row{display:grid;grid-template-columns:1.5fr .6fr .85fr .85fr .9fr .9fr auto;gap:10px;align-items:end;}
 .form-row-compras{display:grid;grid-template-columns:1.3fr .8fr .9fr .9fr .9fr auto;gap:10px;align-items:end;}
 .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font-size:12.5px;cursor:pointer;color:var(--ink-soft);font-family:inherit;}
 .chip.active{background:var(--sage-pale);border-color:var(--sage);color:var(--sage-deep);font-weight:600;}
@@ -535,7 +535,8 @@ function ventasHTML(){
   var rows = ventas.map(function(v){
     return '<tr><td>' + v.fecha + '</td><td style="font-weight:500;">' + escapeHtml(v.marca) + '</td><td>' + v.cantidad + '</td>' +
       '<td style="color:var(--ink-soft);">' + v.canal + '</td><td style="color:var(--ink-soft);">' + (v.cliente ? escapeHtml(v.cliente) : '—') + '</td>' +
-      '<td>' + fmt(v.total) + '</td><td style="color:var(--sage-deep);font-weight:600;">' + fmt(v.gananciaTotal) + '</td>' +
+      '<td style="color:var(--ink-soft);">' + (v.descuento>0 ? '− ' + fmt(v.descuento) : '—') + '</td>' +
+      '<td>' + fmt(v.total) + '</td><td style="color:' + (v.gananciaTotal<0 ? 'var(--terracotta)' : 'var(--sage-deep)') + ';font-weight:600;">' + fmt(v.gananciaTotal) + '</td>' +
       '<td><button class="btn-icon" data-action="delete-venta" data-vid="' + v.id + '">✕</button></td></tr>';
   }).join('');
 
@@ -543,24 +544,44 @@ function ventasHTML(){
     '<div class="card" style="margin-bottom:20px;"><div class="form-row">' +
       '<label class="field">Producto<select id="v-producto"><option value="">Elegir producto…</option>' + options + '</select></label>' +
       '<label class="field">Cantidad<input id="v-cantidad" type="number" min="1" value="1"></label>' +
+      '<label class="field">Descuento ($)<input id="v-descuento" type="number" min="0" step="1" placeholder="0"></label>' +
       '<label class="field">Fecha<input id="v-fecha" type="date" value="' + todayStr() + '"></label>' +
       '<label class="field">Canal<select id="v-canal"><option>Presencial</option><option>WhatsApp</option><option>Instagram</option><option>Otro</option></select></label>' +
       '<label class="field">Cliente (opcional)<input id="v-cliente" placeholder="Nombre"></label>' +
       '<button class="btn-primary" id="v-submit">+ Registrar</button>' +
     '</div><p id="v-info" style="margin:10px 0 0;font-size:12.5px;color:var(--ink-soft);"></p></div>' +
-    '<div class="table-card"><div class="table-wrap"><table style="min-width:760px;">' +
-    '<thead><tr>' + ['Fecha','Producto','Cant.','Canal','Cliente','Total','Ganancia',''].map(function(h){return '<th>'+h+'</th>';}).join('') + '</tr></thead>' +
-    '<tbody>' + (ventas.length===0 ? '<tr><td colspan="8" style="padding:18px;text-align:center;color:var(--ink-faint);">Sin ventas registradas todavía.</td></tr>' : rows) + '</tbody></table></div></div>';
+    '<div class="table-card"><div class="table-wrap"><table style="min-width:860px;">' +
+    '<thead><tr>' + ['Fecha','Producto','Cant.','Canal','Cliente','Descuento','Total','Ganancia',''].map(function(h){return '<th>'+h+'</th>';}).join('') + '</tr></thead>' +
+    '<tbody>' + (ventas.length===0 ? '<tr><td colspan="9" style="padding:18px;text-align:center;color:var(--ink-faint);">Sin ventas registradas todavía.</td></tr>' : rows) + '</tbody></table></div></div>';
 }
 
 function attachVentasHandlers(){
   var sel = document.getElementById('v-producto');
   var info = document.getElementById('v-info');
+  var inpCant = document.getElementById('v-cantidad');
+  var inpDesc = document.getElementById('v-descuento');
   var updateInfo = function(){
     var p = productos.map(withDerived).filter(function(x){return x.id===sel.value;})[0];
-    info.textContent = p ? ('Precio ' + fmt(p.precioVenta) + ' · Costo ' + fmt(p.costoUnidad) + ' · Ganancia por unidad ' + fmt(p.gananciaUnidad)) : '';
+    if(!p){ info.textContent = ''; info.style.color = ''; return; }
+    var cant = parseInt(inpCant.value,10) || 0;
+    var desc = parseNum(inpDesc.value); if(isNaN(desc) || desc<0) desc = 0;
+    var subtotal = p.precioVenta*cant;
+    var total = subtotal - desc;
+    var ganancia = total - p.costoUnidad*cant;
+    var txt = 'Precio ' + fmt(p.precioVenta) + ' · Costo ' + fmt(p.costoUnidad) + ' por unidad';
+    if(cant>0){
+      txt += ' — Subtotal ' + fmt(subtotal);
+      if(desc>0) txt += ' − Descuento ' + fmt(desc);
+      txt += ' = Total ' + fmt(total) + ' · Ganancia ' + fmt(ganancia);
+      if(desc>=subtotal && desc>0) txt += ' (el descuento no puede igualar o superar el subtotal)';
+      else if(ganancia<0) txt += ' (venta por debajo del costo)';
+    }
+    info.textContent = txt;
+    info.style.color = (ganancia<0 && cant>0) ? 'var(--terracotta)' : '';
   };
   sel.addEventListener('change', updateInfo);
+  inpCant.addEventListener('input', updateInfo);
+  inpDesc.addEventListener('input', updateInfo);
   updateInfo();
 
   document.getElementById('v-submit').addEventListener('click', function(){
@@ -570,11 +591,17 @@ function attachVentasHandlers(){
     var cantidad = parseInt(document.getElementById('v-cantidad').value,10);
     if(!cantidad || cantidad<1) return;
     if(cantidad>p.stock){ alert('Stock insuficiente: quedan ' + p.stock + ' unidades de ' + nombreCompleto(p) + '.'); return; }
-    var total = p.precioVenta*cantidad;
+    var subtotal = p.precioVenta*cantidad;
+    var descuento = parseNum(inpDesc.value);
+    if(isNaN(descuento) || descuento<0) descuento = 0;
+    if(descuento>=subtotal && descuento>0){ alert('El descuento (' + fmt(descuento) + ') no puede igualar o superar el subtotal de la venta (' + fmt(subtotal) + ').'); return; }
+    var total = subtotal - descuento;
     var costoTotal = p.costoUnidad*cantidad;
+    if(total-costoTotal<0 && !confirm('Con este descuento la venta queda por debajo del costo (pérdida de ' + fmt(costoTotal-total) + '). ¿Registrarla igual?')) return;
     ventas.unshift({
       id: uid('v'), productoId: p.id, marca: nombreCompleto(p), categoria: p.categoria || 'Sin categoría', cantidad: cantidad,
       precioUnitario: p.precioVenta, costoUnitario: p.costoUnidad,
+      subtotal: subtotal, descuento: descuento,
       total: total, costoTotal: costoTotal, gananciaTotal: total-costoTotal,
       fecha: document.getElementById('v-fecha').value || todayStr(),
       canal: document.getElementById('v-canal').value,
